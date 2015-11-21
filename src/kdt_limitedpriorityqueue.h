@@ -36,7 +36,7 @@ public:
         }
     }
 
-    // Return a vector of items in the queue.
+    // Return a vector of items in the queue sorted by distance values.
     std::vector<T> Items() {
         std::vector<T> result;
         result.reserve(d_queue.size());
@@ -44,6 +44,17 @@ public:
             result.push_back(distItem.second);
         }
         return result;
+    }
+
+    double MaxDistance() {
+        if (d_queue.empty()) {
+            return std::numeric_limits<double>::max();
+        }
+        return d_queue.back().first;
+    }
+
+    bool IsFull() {
+        return d_queue.size() == d_maxSize;
     }
 private:
     typedef std::pair<double, T> DistItemPair;

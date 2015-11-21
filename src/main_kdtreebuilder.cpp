@@ -70,9 +70,16 @@ int main(int argc, char * argv[]) {
     }
 
     // Test
-    std::cout << "Testing\n";
-    Point p1(numDimensions, 1);
-    auto nearestPointsIndexes = tree.FindNearestPoints(p1, 3);
+    std::cout << "Testing linear\n";
+    Point p1(numDimensions, 0.123456);
+    auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, 20);
+    std::cout << nearestPointsIndexes.size() << "\n";
+    for (auto index : nearestPointsIndexes) {
+        std::cout << index << ", ";
+    }
+
+    std::cout << "\nTesting effective\n";
+    nearestPointsIndexes = tree.FindNearestPoints(p1, 20);
     std::cout << nearestPointsIndexes.size() << "\n";
     for (auto index : nearestPointsIndexes) {
         std::cout << index << ", ";
