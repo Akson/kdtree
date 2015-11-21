@@ -25,6 +25,25 @@ template <typename PointType> struct KdTreeNode {
         , point(p) {}
 };
 
+template <typename PointType> struct PointReaderWriter {
+    static void WritePointToStream(const PointType& point,
+                                   std::ostream& stream) {
+        for (unsigned int i = 0; i < point.size(); i++) {
+            stream.write(reinterpret_cast<const char*>(&point[i]),
+                         sizeof point[i]);
+        }
+    }
+    static void ReadPointFromStream(PointType& point,
+                                    std::istream& stream,
+                                    unsigned int numDimensions) {
+        point.resize(numDimensions);
+        for (unsigned int i = 0; i < numDimensions; i++) {
+            stream.read(reinterpret_cast<char*>(&point[i]),
+                        sizeof point[i]);
+        }
+    }
+};
+
 template <typename PointType> class KdTree {
 public:
     // Create an empty kd-tree with the number of dimensions specified by the
@@ -47,6 +66,48 @@ public:
 
     std::vector<Index> FindNearestPointsLinear(const PointType& point,
                                                unsigned int numPoints);
+
+    void WriteToStream(std::ostream& stream) {
+        unsigned int numNodes = d_nodes.size();
+        stream.write(reinterpret_cast<const char*>(&numNodes),
+                     sizeof numNodes);
+        stream.write(reinterpret_cast<const char*>(&d_numDimensions),
+                     sizeof d_numDimensions);
+        stream.write(reinterpret_cast<const char*>(&d_root),
+                     sizeof d_root);
+        for (const auto& node : d_nodes) {
+            PointReaderWriter<PointType>::WritePointToStream(node.point,
+                                                             stream);
+            stream.write(reinterpret_cast<const char*>(&node.leftIndex),
+                         sizeof node.leftIndex);
+            stream.write(reinterpret_cast<const char*>(&node.rightIndex),
+                         sizeof node.rightIndex);
+        }
+    }
+
+    void ReadFromStream(std::istream& stream) {
+        unsigned int numNodes;
+        stream.read(reinterpret_cast<char*>(&numNodes),
+                    sizeof numNodes);
+        stream.read(reinterpret_cast<char*>(&d_numDimensions),
+                    sizeof d_numDimensions);
+        stream.read(reinterpret_cast<char*>(&d_root),
+                    sizeof d_root);
+        d_nodes.clear();
+        d_nodes.reserve(numNodes);
+        for (unsigned int i = 0; i < numNodes; i++) {
+            PointType point;
+            PointReaderWriter<PointType>::ReadPointFromStream(point,
+                                                              stream,
+                                                              d_numDimensions);
+            Node node(point);
+            stream.read(reinterpret_cast<char*>(&node.leftIndex),
+                        sizeof node.leftIndex);
+            stream.read(reinterpret_cast<char*>(&node.rightIndex),
+                        sizeof node.rightIndex);
+            d_nodes.push_back(node);
+        }
+    }
 
 private:
     typedef KdTreeNode<PointType> Node;
@@ -110,7 +171,7 @@ inline void KdTree<PointType>::AddPoint(const PointType & point)
 }
 
 template<typename PointType>
-inline std::vector<Index> KdTree<PointType>::FindNearestPoints(
+std::vector<Index> KdTree<PointType>::FindNearestPoints(
                                                        const PointType & point,
                                                        unsigned int numPoints)
 {
@@ -177,9 +238,9 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPoints(
 }
 
 template<typename PointType>
-inline std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
-    const PointType & point,
-    unsigned int numPoints)
+std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
+                                                       const PointType & point,
+                                                       unsigned int numPoints)
 {
     LimitedDistanceQueue<Index> limitedQueue(numPoints);
 
@@ -235,7 +296,6 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
             backTrackBin.level = curLevel + 1;
             backTrackBin.minBinDistanceSq = distanceToBorderSq;
             backtrackingQueue.Push(backTrackBin, distanceToBorderSq);
-
         }
 
         curLevel++;
@@ -245,7 +305,7 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
 }
 
 template<typename PointType>
-inline std::vector<Index> KdTree<PointType>::FindNearestPointsLinear(
+std::vector<Index> KdTree<PointType>::FindNearestPointsLinear(
                                                        const PointType & point,
                                                        unsigned int numPoints)
 {

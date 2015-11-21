@@ -35,7 +35,7 @@ int main(int argc, char * argv[]) {
     // Open output file before computing to make sure results can be saved
     std::string outputFileName(argv[2]);
     std::ofstream outputFile;
-    outputFile.open(outputFileName);
+    outputFile.open(outputFileName, std::ios::binary);
     if (!outputFile.is_open()) {
         std::cout << "Failed to open output file: " << outputFileName << "\n";
         return -1;
@@ -60,9 +60,8 @@ int main(int argc, char * argv[]) {
     }
     std::cout << "Read " << points.size() << " points\n";*/
 
-
-    int dimensions = 128;
-    for (int i = 0; i < 100000; i++) {
+    int dimensions = 3;
+    for (int i = 0; i < 10000; i++) {
         Point point;
         for (int j = 0; j < dimensions; j++) {
             double r = (double) std::rand() / RAND_MAX;
@@ -70,7 +69,6 @@ int main(int argc, char * argv[]) {
         }
         points.push_back(point);
     }
-
 
     // Construct kd-tree
     unsigned int numDimensions = points[0].size();
@@ -81,30 +79,48 @@ int main(int argc, char * argv[]) {
         tree.AddPoint(point);
     }
 
+    // Write kd-tree to file
+    tree.WriteToStream(outputFile);
+    outputFile.close();
+
+    KdTree tree1(0);
+    std::ifstream ioutputFile;
+    ioutputFile.open(outputFileName, std::ios::binary);
+    tree1.ReadFromStream(ioutputFile);
+    ioutputFile.close();
+
     // Test
     int k = 10;
     for (int i = 0; i < 10; i++) {
         Point point;
         for (int j = 0; j < dimensions; j++) {
             double r = (double)std::rand() / RAND_MAX;
+            //double r = j / 10.0;
             point.push_back(r);
         }
 
         std::cout << "Testing linear:\n";
         Point p1 = point;
         auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, k);
+        auto nearestPointsIndexes1 = tree1.FindNearestPointsLinear(p1, k);
         for (auto index : nearestPointsIndexes) {
+            std::cout << index << ", ";
+        }
+        std::cout << "\n";
+        for (auto index : nearestPointsIndexes1) {
             std::cout << index << ", ";
         }
 
         std::cout << "\nTesting effective:\n";
         nearestPointsIndexes = tree.FindNearestPoints(p1, k);
+        nearestPointsIndexes1 = tree1.FindNearestPoints(p1, k);
         for (auto index : nearestPointsIndexes) {
             std::cout << index << ", ";
         }
 
         std::cout << "\nTesting BBF:\n";
         nearestPointsIndexes = tree.FindNearestPointsBBF(p1, k);
+        nearestPointsIndexes1 = tree1.FindNearestPointsBBF(p1, k);
         for (auto index : nearestPointsIndexes) {
             std::cout << index << ", ";
         }
