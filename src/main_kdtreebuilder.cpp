@@ -61,9 +61,10 @@ int main(int argc, char * argv[]) {
     std::cout << "Read " << points.size() << " points\n";*/
 
 
+    int dimensions = 10;
     for (int i = 0; i < 10000; i++) {
         Point point;
-        for (int j = 0; j < 3; j++) {
+        for (int j = 0; j < dimensions; j++) {
             double r = (double) std::rand() / RAND_MAX;
             point.push_back(r);
         }
@@ -81,28 +82,35 @@ int main(int argc, char * argv[]) {
     }
 
     // Test
-    std::cout << "Testing linear\n";
 
-    Point point;
-    for (int j = 0; j < 3; j++) {
-        double r = (double)std::rand() / RAND_MAX;
-        point.push_back(r);
+    for (int i = 0; i < 10; i++) {
+        Point point;
+        for (int j = 0; j < dimensions; j++) {
+            double r = (double)std::rand() / RAND_MAX;
+            point.push_back(r);
+        }
+
+        std::cout << "Testing linear:\n";
+        Point p1 = point;
+        auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, 1);
+        for (auto index : nearestPointsIndexes) {
+            std::cout << index << ", ";
+        }
+
+        std::cout << "\nTesting effective: ";
+        nearestPointsIndexes = tree.FindNearestPoints(p1, 1);
+        for (auto index : nearestPointsIndexes) {
+            std::cout << index << ", ";
+        }
+
+        std::cout << "\nTesting BBF: ";
+        nearestPointsIndexes = tree.FindNearestPointsBBF(p1, 1);
+        for (auto index : nearestPointsIndexes) {
+            std::cout << index << ", ";
+        }
+
+        std::cout << "\n\n";
     }
-
-    Point p1 = point;
-    auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, 1);
-    std::cout << nearestPointsIndexes.size() << "\n";
-    for (auto index : nearestPointsIndexes) {
-        std::cout << index << ", ";
-    }
-
-    std::cout << "\nTesting effective\n";
-    nearestPointsIndexes = tree.FindNearestPoints(p1, 1);
-    std::cout << nearestPointsIndexes.size() << "\n";
-    for (auto index : nearestPointsIndexes) {
-        std::cout << index << ", ";
-    }
-
     std::cin.ignore();
 
     return 0;

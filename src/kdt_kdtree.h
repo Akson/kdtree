@@ -42,6 +42,9 @@ public:
     std::vector<Index> FindNearestPoints(const PointType& point,
                                          unsigned int numPoints);
 
+    std::vector<Index> FindNearestPointsBBF(const PointType& point,
+                                            unsigned int numPoints);
+
     std::vector<Index> FindNearestPointsLinear(const PointType& point,
                                                unsigned int numPoints);
 
@@ -113,68 +116,145 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPoints(
 {
     LimitedDistanceQueue<Index> limitedQueue(numPoints);
 
-    struct StackFrame {
+    struct Bin {
         Level level;
-        Index subtreeRootIndex;
-        double minSubtreeDistance;
+        Index nodeIndex;
+        double minBinDistanceSq;
     };
-    std::stack<StackFrame> stack;
+    std::stack<Bin> backtrackingStack;
     
-    StackFrame initialFrame;
-    initialFrame.level = 0;
-    initialFrame.subtreeRootIndex = d_root;
-    initialFrame.minSubtreeDistance = 0;
-    stack.push(initialFrame);
-
     int visited = 0;
-    while (!stack.empty()) {
-        StackFrame curFrame = stack.top();
-        stack.pop();
+    int skiped = 0;
+    
+    Index curNodeIndex = d_root;
+    Level curLevel = 0;
+    while (!backtrackingStack.empty() || None != curNodeIndex) {
+        if (None == curNodeIndex) {
+            Bin curBin = backtrackingStack.top();
+            backtrackingStack.pop();
+
+            curLevel = curBin.level;
+            curNodeIndex = curBin.nodeIndex;
+
+            if (curBin.minBinDistanceSq > limitedQueue.MaxDistance()
+                && limitedQueue.IsFull()) {
+                // Current subtree cannot have points closer than the farthest
+                // already found point and there are enough points found.
+                skiped++;
+                curNodeIndex = None;
+                continue;
+            }
+        }
         
-        if (None == curFrame.subtreeRootIndex) {
-            continue;
-        }
-
-        if (curFrame.minSubtreeDistance > limitedQueue.MaxDistance()
-            && limitedQueue.IsFull()) {
-            // Current subtree cannot have points closer than the farthest
-            // already found point and there is enough points found already.
-            continue;
-        }
-
-        Node& curNode = d_nodes[curFrame.subtreeRootIndex];
-        limitedQueue.Push(curFrame.subtreeRootIndex, 
+        Node& curNode = d_nodes[curNodeIndex];
+        limitedQueue.Push(curNodeIndex,
                           DistanceSq(point, curNode.point));
 
-        unsigned int level = curFrame.level;
-        unsigned int dimension = level % d_numDimensions;
-
-        StackFrame newFrame;
-        newFrame.level = level + 1;
-        double distanceToBorder 
+        unsigned int dimension = curLevel % d_numDimensions;
+        double distanceToBorder
             = abs(point[dimension] - curNode.point[dimension]);
+        double distanceToBorderSq = distanceToBorder * distanceToBorder;
+
+        Index otherNodeIndex = None;
         if (point[dimension] < curNode.point[dimension]) {
             // left
-            newFrame.subtreeRootIndex = curNode.leftIndex;
-            newFrame.minSubtreeDistance = 0;
-            stack.push(newFrame);
-
-            newFrame.subtreeRootIndex = curNode.rightIndex;
-            newFrame.minSubtreeDistance = distanceToBorder * distanceToBorder;
-            stack.push(newFrame);
+            curNodeIndex = curNode.leftIndex;
+            otherNodeIndex = curNode.rightIndex;
         } else {
             // right
-            newFrame.subtreeRootIndex = curNode.rightIndex;
-            newFrame.minSubtreeDistance = 0;
-            stack.push(newFrame);
-
-            newFrame.subtreeRootIndex = curNode.leftIndex;
-            newFrame.minSubtreeDistance = distanceToBorder * distanceToBorder;
-            stack.push(newFrame);
+            curNodeIndex = curNode.rightIndex;
+            otherNodeIndex = curNode.leftIndex;
         }
+
+        if (None != otherNodeIndex) {
+            Bin backTrackBin;
+            backTrackBin.nodeIndex = otherNodeIndex;
+            backTrackBin.level = curLevel + 1;
+            backTrackBin.minBinDistanceSq = distanceToBorderSq;
+            backtrackingStack.push(backTrackBin);
+        }
+
         visited++;
+
+        curLevel++;
     }
-    std::cout << "visited: " << visited << "\n";
+    std::cout << "visited: " << visited;
+    std::cout << "; skiped: " << skiped << "\n";
+
+    return limitedQueue.Items();
+}
+
+template<typename PointType>
+inline std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
+    const PointType & point,
+    unsigned int numPoints)
+{
+    LimitedDistanceQueue<Index> limitedQueue(numPoints);
+
+    struct Bin {
+        Level level;
+        Index nodeIndex;
+        double minBinDistanceSq;
+    };
+    std::stack<Bin> backtrackingStack;
+    
+    int visited = 0;
+    int skiped = 0;
+    
+    Index curNodeIndex = d_root;
+    Level curLevel = 0;
+    while (!backtrackingStack.empty() || None != curNodeIndex) {
+        if (None == curNodeIndex) {
+            Bin curBin = backtrackingStack.top();
+            backtrackingStack.pop();
+
+            curLevel = curBin.level;
+            curNodeIndex = curBin.nodeIndex;
+
+            if (curBin.minBinDistanceSq > limitedQueue.MaxDistance()
+                && limitedQueue.IsFull()) {
+                // Current subtree cannot have points closer than the farthest
+                // already found point and there are enough points found.
+                skiped++;
+                curNodeIndex = None;
+                continue;
+            }
+        }
+        
+        Node& curNode = d_nodes[curNodeIndex];
+        limitedQueue.Push(curNodeIndex,
+                          DistanceSq(point, curNode.point));
+
+        unsigned int dimension = curLevel % d_numDimensions;
+        double distanceToBorder
+            = abs(point[dimension] - curNode.point[dimension]);
+        double distanceToBorderSq = distanceToBorder * distanceToBorder;
+
+        Index otherNodeIndex = None;
+        if (point[dimension] < curNode.point[dimension]) {
+            // left
+            curNodeIndex = curNode.leftIndex;
+            otherNodeIndex = curNode.rightIndex;
+        } else {
+            // right
+            curNodeIndex = curNode.rightIndex;
+            otherNodeIndex = curNode.leftIndex;
+        }
+
+        if (None != otherNodeIndex) {
+            Bin backTrackBin;
+            backTrackBin.nodeIndex = otherNodeIndex;
+            backTrackBin.level = curLevel + 1;
+            backTrackBin.minBinDistanceSq = distanceToBorderSq;
+            backtrackingStack.push(backTrackBin);
+        }
+
+        visited++;
+
+        curLevel++;
+    }
+    std::cout << "visited: " << visited;
+    std::cout << "; skiped: " << skiped << "\n";
 
     return limitedQueue.Items();
 }
