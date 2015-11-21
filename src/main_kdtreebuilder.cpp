@@ -61,8 +61,8 @@ int main(int argc, char * argv[]) {
     std::cout << "Read " << points.size() << " points\n";*/
 
 
-    int dimensions = 10;
-    for (int i = 0; i < 10000; i++) {
+    int dimensions = 128;
+    for (int i = 0; i < 100000; i++) {
         Point point;
         for (int j = 0; j < dimensions; j++) {
             double r = (double) std::rand() / RAND_MAX;
@@ -82,7 +82,7 @@ int main(int argc, char * argv[]) {
     }
 
     // Test
-
+    int k = 10;
     for (int i = 0; i < 10; i++) {
         Point point;
         for (int j = 0; j < dimensions; j++) {
@@ -92,19 +92,19 @@ int main(int argc, char * argv[]) {
 
         std::cout << "Testing linear:\n";
         Point p1 = point;
-        auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, 1);
+        auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, k);
         for (auto index : nearestPointsIndexes) {
             std::cout << index << ", ";
         }
 
-        std::cout << "\nTesting effective: ";
-        nearestPointsIndexes = tree.FindNearestPoints(p1, 1);
+        std::cout << "\nTesting effective:\n";
+        nearestPointsIndexes = tree.FindNearestPoints(p1, k);
         for (auto index : nearestPointsIndexes) {
             std::cout << index << ", ";
         }
 
-        std::cout << "\nTesting BBF: ";
-        nearestPointsIndexes = tree.FindNearestPointsBBF(p1, 1);
+        std::cout << "\nTesting BBF:\n";
+        nearestPointsIndexes = tree.FindNearestPointsBBF(p1, k);
         for (auto index : nearestPointsIndexes) {
             std::cout << index << ", ";
         }

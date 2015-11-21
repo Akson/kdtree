@@ -53,8 +53,18 @@ public:
         return d_queue.back().first;
     }
 
+    T PopFront() {
+        T front = d_queue.front().second;
+        d_queue.pop_front();
+        return front;
+    }
+
     bool IsFull() {
         return d_queue.size() == d_maxSize;
+    }
+
+    bool Empty() {
+        return d_queue.empty();
     }
 private:
     typedef std::pair<double, T> DistItemPair;

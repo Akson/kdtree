@@ -123,9 +123,6 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPoints(
     };
     std::stack<Bin> backtrackingStack;
     
-    int visited = 0;
-    int skiped = 0;
-    
     Index curNodeIndex = d_root;
     Level curLevel = 0;
     while (!backtrackingStack.empty() || None != curNodeIndex) {
@@ -140,7 +137,6 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPoints(
                 && limitedQueue.IsFull()) {
                 // Current subtree cannot have points closer than the farthest
                 // already found point and there are enough points found.
-                skiped++;
                 curNodeIndex = None;
                 continue;
             }
@@ -174,12 +170,8 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPoints(
             backtrackingStack.push(backTrackBin);
         }
 
-        visited++;
-
         curLevel++;
     }
-    std::cout << "visited: " << visited;
-    std::cout << "; skiped: " << skiped << "\n";
 
     return limitedQueue.Items();
 }
@@ -196,17 +188,14 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
         Index nodeIndex;
         double minBinDistanceSq;
     };
-    std::stack<Bin> backtrackingStack;
-    
-    int visited = 0;
-    int skiped = 0;
-    
+    LimitedDistanceQueue<Bin> backtrackingQueue(
+        std::numeric_limits<unsigned int>::max());
+
     Index curNodeIndex = d_root;
     Level curLevel = 0;
-    while (!backtrackingStack.empty() || None != curNodeIndex) {
+    while (!backtrackingQueue.Empty() || None != curNodeIndex) {
         if (None == curNodeIndex) {
-            Bin curBin = backtrackingStack.top();
-            backtrackingStack.pop();
+            Bin curBin = backtrackingQueue.PopFront();
 
             curLevel = curBin.level;
             curNodeIndex = curBin.nodeIndex;
@@ -215,7 +204,6 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
                 && limitedQueue.IsFull()) {
                 // Current subtree cannot have points closer than the farthest
                 // already found point and there are enough points found.
-                skiped++;
                 curNodeIndex = None;
                 continue;
             }
@@ -246,15 +234,12 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
             backTrackBin.nodeIndex = otherNodeIndex;
             backTrackBin.level = curLevel + 1;
             backTrackBin.minBinDistanceSq = distanceToBorderSq;
-            backtrackingStack.push(backTrackBin);
-        }
+            backtrackingQueue.Push(backTrackBin, distanceToBorderSq);
 
-        visited++;
+        }
 
         curLevel++;
     }
-    std::cout << "visited: " << visited;
-    std::cout << "; skiped: " << skiped << "\n";
 
     return limitedQueue.Items();
 }
