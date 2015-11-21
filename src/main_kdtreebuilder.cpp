@@ -44,7 +44,7 @@ int main(int argc, char * argv[]) {
     // Read points from input file
     std::cout << "Reading points from: " << inputFileName << "\n";
     std::vector<Point> points;
-    for (std::string inputLine; std::getline(inputFile, inputLine); ) {
+    /*for (std::string inputLine; std::getline(inputFile, inputLine); ) {
         std::istringstream inputLineStream(inputLine);
         Point point;
         double currentCoordinate;
@@ -58,7 +58,18 @@ int main(int argc, char * argv[]) {
         std::cout << "No points read from the input file\n";
         return 0;
     }
-    std::cout << "Read " << points.size() << " points\n";
+    std::cout << "Read " << points.size() << " points\n";*/
+
+
+    for (int i = 0; i < 10000; i++) {
+        Point point;
+        for (int j = 0; j < 3; j++) {
+            double r = (double) std::rand() / RAND_MAX;
+            point.push_back(r);
+        }
+        points.push_back(point);
+    }
+
 
     // Construct kd-tree
     unsigned int numDimensions = points[0].size();
@@ -71,15 +82,22 @@ int main(int argc, char * argv[]) {
 
     // Test
     std::cout << "Testing linear\n";
-    Point p1(numDimensions, 0.123456);
-    auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, 20);
+
+    Point point;
+    for (int j = 0; j < 3; j++) {
+        double r = (double)std::rand() / RAND_MAX;
+        point.push_back(r);
+    }
+
+    Point p1 = point;
+    auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, 1);
     std::cout << nearestPointsIndexes.size() << "\n";
     for (auto index : nearestPointsIndexes) {
         std::cout << index << ", ";
     }
 
     std::cout << "\nTesting effective\n";
-    nearestPointsIndexes = tree.FindNearestPoints(p1, 20);
+    nearestPointsIndexes = tree.FindNearestPoints(p1, 1);
     std::cout << nearestPointsIndexes.size() << "\n";
     for (auto index : nearestPointsIndexes) {
         std::cout << index << ", ";

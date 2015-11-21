@@ -50,13 +50,13 @@ private:
     typedef unsigned int Level;
 
 private:
-    double Distance(const PointType& a, const PointType& b) {
-        double distance = 0.0;
+    double DistanceSq(const PointType& a, const PointType& b) {
+        double distanceSq = 0.0;
         for (unsigned i = 0; i < a.size(); i++) {
             double diff = a[i] - b[i];
-            distance += diff * diff;
+            distanceSq += diff * diff;
         }
-        return distance;
+        return distanceSq;
     }
 
 private:
@@ -119,53 +119,62 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPoints(
         double minSubtreeDistance;
     };
     std::stack<StackFrame> stack;
-    StackFrame frame;
-    frame.level = 0;
-    frame.subtreeRootIndex = d_root;
-    frame.minSubtreeDistance = MaxDistance;
-    stack.push(frame);
+    
+    StackFrame initialFrame;
+    initialFrame.level = 0;
+    initialFrame.subtreeRootIndex = d_root;
+    initialFrame.minSubtreeDistance = 0;
+    stack.push(initialFrame);
+
+    int visited = 0;
     while (!stack.empty()) {
-        StackFrame frame = stack.top();
+        StackFrame curFrame = stack.top();
         stack.pop();
         
-        if (None == frame.subtreeRootIndex) {
+        if (None == curFrame.subtreeRootIndex) {
             continue;
         }
-        if (frame.minSubtreeDistance > limitedQueue.MaxDistance() 
+
+        if (curFrame.minSubtreeDistance > limitedQueue.MaxDistance()
             && limitedQueue.IsFull()) {
+            // Current subtree cannot have points closer than the farthest
+            // already found point and there is enough points found already.
             continue;
         }
 
-        Node& curNode = d_nodes[frame.subtreeRootIndex];
-        limitedQueue.Push(frame.subtreeRootIndex, 
-                          Distance(point, curNode.point));
+        Node& curNode = d_nodes[curFrame.subtreeRootIndex];
+        limitedQueue.Push(curFrame.subtreeRootIndex, 
+                          DistanceSq(point, curNode.point));
 
-        unsigned int level = frame.level;
+        unsigned int level = curFrame.level;
         unsigned int dimension = level % d_numDimensions;
 
-        frame.level = level + 1;
+        StackFrame newFrame;
+        newFrame.level = level + 1;
         double distanceToBorder 
             = abs(point[dimension] - curNode.point[dimension]);
         if (point[dimension] < curNode.point[dimension]) {
             // left
-            frame.subtreeRootIndex = curNode.leftIndex;
-            frame.minSubtreeDistance = 0;
-            stack.push(frame);
+            newFrame.subtreeRootIndex = curNode.leftIndex;
+            newFrame.minSubtreeDistance = 0;
+            stack.push(newFrame);
 
-            frame.subtreeRootIndex = curNode.rightIndex;
-            frame.minSubtreeDistance = distanceToBorder;
-            stack.push(frame);
+            newFrame.subtreeRootIndex = curNode.rightIndex;
+            newFrame.minSubtreeDistance = distanceToBorder * distanceToBorder;
+            stack.push(newFrame);
         } else {
             // right
-            frame.subtreeRootIndex = curNode.rightIndex;
-            frame.minSubtreeDistance = 0;
-            stack.push(frame);
+            newFrame.subtreeRootIndex = curNode.rightIndex;
+            newFrame.minSubtreeDistance = 0;
+            stack.push(newFrame);
 
-            frame.subtreeRootIndex = curNode.leftIndex;
-            frame.minSubtreeDistance = distanceToBorder;
-            stack.push(frame);
+            newFrame.subtreeRootIndex = curNode.leftIndex;
+            newFrame.minSubtreeDistance = distanceToBorder * distanceToBorder;
+            stack.push(newFrame);
         }
+        visited++;
     }
+    std::cout << "visited: " << visited << "\n";
 
     return limitedQueue.Items();
 }
@@ -178,7 +187,7 @@ inline std::vector<Index> KdTree<PointType>::FindNearestPointsLinear(
     // Linear search for testing purpose
     LimitedDistanceQueue<Index> limitedQueue(numPoints);
     for (Index i = 0; i < d_nodes.size(); i++) {
-        limitedQueue.Push(i, Distance(point, d_nodes[i].point));
+        limitedQueue.Push(i, DistanceSq(point, d_nodes[i].point));
     }
     return limitedQueue.Items();
 }
