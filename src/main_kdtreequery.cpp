@@ -60,7 +60,7 @@ int main(int argc, char * argv[]) {
     // Open input tree file
     std::string inputTreeFileName(argv[1]);
     std::ifstream inputTreeFile;
-    inputTreeFile.open(inputTreeFileName);
+    inputTreeFile.open(inputTreeFileName, std::ios::binary);
     if (!inputTreeFile.is_open()) {
         std::cout << "Failed to open the input tree file: "
             << inputTreeFileName << "\n";
@@ -81,8 +81,9 @@ int main(int argc, char * argv[]) {
         iQueryPoint < queryPoints.size(); 
         iQueryPoint++) {
         Point queryPoint = queryPoints[iQueryPoint];
+        std::cout << "Query point " << iQueryPoint;
 
-        std::cout << "Testing linear:\n";
+        std::cout << "\nLinear search:  ";
         Point p1 = queryPoint;
         auto nearestPointsIndexes
             = tree.FindNearestPointsLinear(p1, nearestPointsNumber);
@@ -90,14 +91,14 @@ int main(int argc, char * argv[]) {
             std::cout << point.userData << ", ";
         }
 
-        std::cout << "\nTesting effective:\n";
+        std::cout << "\nNormal search:  ";
         nearestPointsIndexes 
             = tree.FindNearestPoints(p1, nearestPointsNumber);
         for (auto point : nearestPointsIndexes) {
             std::cout << point.userData << ", ";
         }
 
-        std::cout << "\nTesting BBF:\n";
+        std::cout << "\nBest bin first: ";
         nearestPointsIndexes 
             = tree.FindNearestPointsBBF(p1, nearestPointsNumber);
         for (auto point : nearestPointsIndexes) {
@@ -106,6 +107,8 @@ int main(int argc, char * argv[]) {
 
         std::cout << "\n\n";
     }
+
+    std::cout << "DONE\n";
     std::cin.ignore();
 
     return 0;
