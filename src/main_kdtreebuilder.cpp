@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
     // Read points from input file
     std::cout << "Reading points from: " << inputFileName << "\n";
     std::vector<Point> points;
-    /*for (std::string inputLine; std::getline(inputFile, inputLine); ) {
+    for (std::string inputLine; std::getline(inputFile, inputLine); ) {
         std::istringstream inputLineStream(inputLine);
         Point point;
         double currentCoordinate;
@@ -61,103 +61,21 @@ int main(int argc, char * argv[]) {
         std::cout << "No points read from the input file\n";
         return 0;
     }
-    std::cout << "Read " << points.size() << " points\n";*/
-
-    int dimensions = 128;
-    for (int i = 0; i < 1000; i++) {
-        Point point;
-        for (int j = 0; j < dimensions; j++) {
-            double r = (double) std::rand() / RAND_MAX;
-            point.push_back(r);
-        }
-        point.userData = i;
-        points.push_back(point);
-    }
+    std::cout << "Read " << points.size() << " points\n";
 
     // Construct kd-tree
     unsigned int numDimensions = points[0].size();
     std::cout << "Constructing kd-tree with " << numDimensions 
         << " dimensions\n";
     KdTree tree(numDimensions);
-    for (auto point : points) {
-        tree.AddPoint(point);
-    }
+    tree.CreateFromPoints(points);
 
     // Write kd-tree to file
+    std::cout << "Write kd-tree to file: " << outputFileName << "\n";
     tree.WriteToStream(outputFile);
     outputFile.close();
 
-    KdTree tree1(0);
-    std::ifstream ioutputFile;
-    ioutputFile.open(outputFileName, std::ios::binary);
-    tree1.ReadFromStream(ioutputFile);
-    ioutputFile.close();
-
-    KdTree tree2(numDimensions);
-    tree2.CreateFromPoints(points);
-
-    // Test
-    int k = 10;
-    for (int i = 0; i < 10; i++) {
-        Point point;
-        for (int j = 0; j < dimensions; j++) {
-            double r = (double)std::rand() / RAND_MAX;
-            //double r = j / 10.0;
-            point.push_back(r);
-        }
-
-        std::cout << "Testing linear:\n";
-        Point p1 = point;
-        auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, k);
-        auto nearestPointsIndexes1 = tree1.FindNearestPointsLinear(p1, k);
-        auto nearestPointsIndexes2 = tree2.FindNearestPointsLinear(p1, k);
-        for (auto point : nearestPointsIndexes) {
-            std::cout << point.userData << ", ";
-        }
-        std::cout << "\n";
-        for (auto point : nearestPointsIndexes1) {
-            std::cout << point.userData << ", ";
-        }
-        std::cout << "\n";
-        for (auto point : nearestPointsIndexes2) {
-            std::cout << point.userData << ", ";
-        }
-
-        std::cout << "\nTesting effective:\n";
-        nearestPointsIndexes = tree.FindNearestPoints(p1, k);
-        nearestPointsIndexes1 = tree1.FindNearestPoints(p1, k);
-        nearestPointsIndexes2 = tree2.FindNearestPoints(p1, k);
-        for (auto point : nearestPointsIndexes) {
-            std::cout << point.userData << ", ";
-        }
-        std::cout << "\n";
-        for (auto point : nearestPointsIndexes1) {
-            std::cout << point.userData << ", ";
-        }
-        std::cout << "\n";
-        for (auto point : nearestPointsIndexes2) {
-            std::cout << point.userData << ", ";
-        }
-
-        std::cout << "\nTesting BBF:\n";
-        nearestPointsIndexes = tree.FindNearestPointsBBF(p1, k);
-        nearestPointsIndexes1 = tree1.FindNearestPointsBBF(p1, k);
-        nearestPointsIndexes2 = tree2.FindNearestPointsBBF(p1, k);
-        for (auto point : nearestPointsIndexes) {
-            std::cout << point.userData << ", ";
-        }
-        std::cout << "\n";
-        for (auto point : nearestPointsIndexes1) {
-            std::cout << point.userData << ", ";
-        }
-        std::cout << "\n";
-        for (auto point : nearestPointsIndexes2) {
-            std::cout << point.userData << ", ";
-        }
-
-        std::cout << "\n\n";
-    }
+    std::cout << "\nDone\n";
     std::cin.ignore();
-
     return 0;
 }
