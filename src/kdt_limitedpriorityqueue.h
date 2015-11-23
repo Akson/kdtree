@@ -3,6 +3,7 @@
 
 #include <list>
 #include <vector>
+#include <limits>
 
 namespace kdt {
 template <typename T> class LimitedDistanceQueue {

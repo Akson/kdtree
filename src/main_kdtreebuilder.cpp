@@ -68,7 +68,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Constructing kd-tree with " << numDimensions 
         << " dimensions\n";
     KdTree tree(numDimensions);
-    tree.CreateFromPoints(points);
+    tree.CreateFromPoints(points, numDimensions);
 
     // Write kd-tree to file
     std::cout << "Write kd-tree to file: " << outputFileName << "\n";

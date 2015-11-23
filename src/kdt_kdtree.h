@@ -6,6 +6,7 @@
 #include <vector>
 #include <stack>
 #include <algorithm>
+#include <limits>
 
 namespace kdt {
 
@@ -17,27 +18,37 @@ template <typename PointType> class KdTree {
 public: // PUBLIC METHODS
 
     // Create an empty kd-tree with the number of dimensions specified by the
-    // 'numDimensions' parameter
-    KdTree(unsigned int numDimensions) : d_numDimensions(numDimensions) {}
+    // optional parameter 'numDimensions'. If the number of dimensions is not
+    // specified during construction, the tree should be created from a binary
+    // representation using the 'ReadFromStream' or from a list of points using
+    // the 'CreateFromPoints'.
+    KdTree(unsigned int numDimensions = 0) : d_numDimensions(numDimensions) {}
+
     ~KdTree() {}
 
     // Replace the current tree by the new tree create from points stored in 
-    // the vector specified by the 'points'.
-    void CreateFromPoints(const std::vector<PointType>& points);
+    // the vector specified by the 'points' with number of dimesions specified
+    // by the 'numDimensions'. If the 'point' vector is empty, create an empty
+    // tree.
+    void CreateFromPoints(const std::vector<PointType>& points,
+                          unsigned int numDimensions);
 
     // Add a point specified by the 'point' to the existing kd-tree.
-    // Return the index of the point in the local tree points storage.
+    // The behavior is undefined unless the number of  dimension of the added
+    // point is equal to number of dimensions of the tree.
     void AddPoint(const PointType& point);
 
-    // Write the tree data in binary format to the 'stream'.
+    // Write the tree data in binary representation to the 'stream'.
     void WriteToStream(std::ostream& stream) const;
 
     // Read the tree's binary representation from the 'stream'.
+    // The behavior is undefined unless the stream contains valid kd-tree
+    // binary representation.
     void ReadFromStream(std::istream& stream);
 
-    // Return the vector that contains indexes of 'numPoints' nearest points to
-    // the point specified by the 'point' sorted by distance. If the tree
-    // contains less than 'numPoints' points, return indexes of all points of
+    // Return the vector that contains 'numPoints' nearest points to
+    // the point specified by the 'point' sorted by distance.
+    // If the tree contains less than 'numPoints' points, return all points of
     // the tree. If the tree is empty, return an empty vector.
     std::vector<PointType> FindNearestPoints(const PointType& point,
                                              unsigned int numPoints) const;
@@ -116,8 +127,10 @@ NodeIndex KdTree<PointType>::ConstructSubtreeRecursively(
 
 template<typename PointType>
 void KdTree<PointType>::CreateFromPoints(
-    const std::vector<PointType>& points)
+    const std::vector<PointType>& points,
+    unsigned int numDimensions)
 {
+    d_numDimensions = numDimensions;
     d_nodes.clear();
     d_nodes.reserve(points.size());
 
@@ -173,8 +186,6 @@ void KdTree<PointType>::ReadFromStream(std::istream& stream) {
 template<typename PointType>
 void KdTree<PointType>::AddPoint(const PointType & point)
 {
-    // TODO: check dimensions
-
     NodeIndex newNodeIndex = d_nodes.size();
     Node newNode;
     newNode.leftIndex = None;

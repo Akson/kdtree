@@ -2,7 +2,7 @@
 #define KDT_POINT_H
 
 #include <vector>
-#include<iostream>
+#include <iostream>
 
 namespace kdt {
 
