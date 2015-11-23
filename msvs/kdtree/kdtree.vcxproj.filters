@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\kdt_kdtree.h" />
     <ClInclude Include="..\..\src\kdt_limitedpriorityqueue.h" />
+    <ClInclude Include="..\..\src\kdt_point.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\kdt_kdtree.cpp" />

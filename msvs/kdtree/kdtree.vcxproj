@@ -24,6 +24,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\kdt_kdtree.h" />
     <ClInclude Include="..\..\src\kdt_limitedpriorityqueue.h" />
+    <ClInclude Include="..\..\src\kdt_point.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DF5FE05C-CB6C-42AB-921C-966441931234}</ProjectGuid>

@@ -4,9 +4,11 @@
 #include<string>
 #include<sstream>
 #include"kdt_kdtree.h"
+#include"kdt_point.h"
 
-typedef std::vector<double> Point;
+typedef kdt::VectorPointWithUserData<double, int> Point;
 typedef kdt::KdTree<Point> KdTree;
+
 
 int main(int argc, char * argv[]) {
     if (argc != 3) {
@@ -51,6 +53,7 @@ int main(int argc, char * argv[]) {
         while (inputLineStream  >> currentCoordinate) {
             point.push_back(currentCoordinate);
         }
+        point.userData = points.size();
         points.push_back(point);
     }
     inputFile.close();
@@ -60,13 +63,14 @@ int main(int argc, char * argv[]) {
     }
     std::cout << "Read " << points.size() << " points\n";*/
 
-    int dimensions = 3;
-    for (int i = 0; i < 10000; i++) {
+    int dimensions = 128;
+    for (int i = 0; i < 1000; i++) {
         Point point;
         for (int j = 0; j < dimensions; j++) {
             double r = (double) std::rand() / RAND_MAX;
             point.push_back(r);
         }
+        point.userData = i;
         points.push_back(point);
     }
 
@@ -89,6 +93,9 @@ int main(int argc, char * argv[]) {
     tree1.ReadFromStream(ioutputFile);
     ioutputFile.close();
 
+    KdTree tree2(numDimensions);
+    tree2.CreateFromPoints(points);
+
     // Test
     int k = 10;
     for (int i = 0; i < 10; i++) {
@@ -103,26 +110,49 @@ int main(int argc, char * argv[]) {
         Point p1 = point;
         auto nearestPointsIndexes = tree.FindNearestPointsLinear(p1, k);
         auto nearestPointsIndexes1 = tree1.FindNearestPointsLinear(p1, k);
-        for (auto index : nearestPointsIndexes) {
-            std::cout << index << ", ";
+        auto nearestPointsIndexes2 = tree2.FindNearestPointsLinear(p1, k);
+        for (auto point : nearestPointsIndexes) {
+            std::cout << point.userData << ", ";
         }
         std::cout << "\n";
-        for (auto index : nearestPointsIndexes1) {
-            std::cout << index << ", ";
+        for (auto point : nearestPointsIndexes1) {
+            std::cout << point.userData << ", ";
+        }
+        std::cout << "\n";
+        for (auto point : nearestPointsIndexes2) {
+            std::cout << point.userData << ", ";
         }
 
         std::cout << "\nTesting effective:\n";
         nearestPointsIndexes = tree.FindNearestPoints(p1, k);
         nearestPointsIndexes1 = tree1.FindNearestPoints(p1, k);
-        for (auto index : nearestPointsIndexes) {
-            std::cout << index << ", ";
+        nearestPointsIndexes2 = tree2.FindNearestPoints(p1, k);
+        for (auto point : nearestPointsIndexes) {
+            std::cout << point.userData << ", ";
+        }
+        std::cout << "\n";
+        for (auto point : nearestPointsIndexes1) {
+            std::cout << point.userData << ", ";
+        }
+        std::cout << "\n";
+        for (auto point : nearestPointsIndexes2) {
+            std::cout << point.userData << ", ";
         }
 
         std::cout << "\nTesting BBF:\n";
         nearestPointsIndexes = tree.FindNearestPointsBBF(p1, k);
         nearestPointsIndexes1 = tree1.FindNearestPointsBBF(p1, k);
-        for (auto index : nearestPointsIndexes) {
-            std::cout << index << ", ";
+        nearestPointsIndexes2 = tree2.FindNearestPointsBBF(p1, k);
+        for (auto point : nearestPointsIndexes) {
+            std::cout << point.userData << ", ";
+        }
+        std::cout << "\n";
+        for (auto point : nearestPointsIndexes1) {
+            std::cout << point.userData << ", ";
+        }
+        std::cout << "\n";
+        for (auto point : nearestPointsIndexes2) {
+            std::cout << point.userData << ", ";
         }
 
         std::cout << "\n\n";

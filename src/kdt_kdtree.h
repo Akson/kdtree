@@ -5,138 +5,182 @@
 
 #include <vector>
 #include <stack>
-#include <cmath>
+#include <algorithm>
 
 namespace kdt {
 
-typedef std::size_t Index; // Used for referncing nodes in a tree
-static const Index None = std::numeric_limits<Index>::max();
+typedef std::size_t NodeIndex; // Used for referncing nodes in a tree
+static const NodeIndex None = std::numeric_limits<NodeIndex>::max();
 static const double MaxDistance = std::numeric_limits<double>::max();
 
-template <typename PointType> struct KdTreeNode {
-    Index leftIndex;
-    Index rightIndex;
-    PointType point;
-
-    // Create a node with point specified by the 'p' and not children
-    KdTreeNode(const PointType& p) 
-        : leftIndex(None)
-        , rightIndex(None)
-        , point(p) {}
-};
-
-template <typename PointType> struct PointReaderWriter {
-    static void WritePointToStream(const PointType& point,
-                                   std::ostream& stream) {
-        for (unsigned int i = 0; i < point.size(); i++) {
-            stream.write(reinterpret_cast<const char*>(&point[i]),
-                         sizeof point[i]);
-        }
-    }
-    static void ReadPointFromStream(PointType& point,
-                                    std::istream& stream,
-                                    unsigned int numDimensions) {
-        point.resize(numDimensions);
-        for (unsigned int i = 0; i < numDimensions; i++) {
-            stream.read(reinterpret_cast<char*>(&point[i]),
-                        sizeof point[i]);
-        }
-    }
-};
-
 template <typename PointType> class KdTree {
-public:
+public: // PUBLIC METHODS
+
     // Create an empty kd-tree with the number of dimensions specified by the
     // 'numDimensions' parameter
     KdTree(unsigned int numDimensions) : d_numDimensions(numDimensions) {}
     ~KdTree() {}
 
-    // Add a point specified by the 'point' to the existing kd-tree
+    // Replace the current tree by the new tree create from points stored in 
+    // the vector specified by the 'points'.
+    void CreateFromPoints(const std::vector<PointType>& points);
+
+    // Add a point specified by the 'point' to the existing kd-tree.
+    // Return the index of the point in the local tree points storage.
     void AddPoint(const PointType& point);
+
+    // Write the tree data in binary format to the 'stream'.
+    void WriteToStream(std::ostream& stream) const;
+
+    // Read the tree's binary representation from the 'stream'.
+    void ReadFromStream(std::istream& stream);
 
     // Return the vector that contains indexes of 'numPoints' nearest points to
     // the point specified by the 'point' sorted by distance. If the tree
     // contains less than 'numPoints' points, return indexes of all points of
     // the tree. If the tree is empty, return an empty vector.
-    std::vector<Index> FindNearestPoints(const PointType& point,
-                                         unsigned int numPoints);
+    std::vector<PointType> FindNearestPoints(const PointType& point,
+                                             unsigned int numPoints) const;
 
-    std::vector<Index> FindNearestPointsBBF(const PointType& point,
-                                            unsigned int numPoints);
+    std::vector<PointType> FindNearestPointsBBF(const PointType& point,
+                                                unsigned int numPoints) const;
 
-    std::vector<Index> FindNearestPointsLinear(const PointType& point,
-                                               unsigned int numPoints);
+    std::vector<PointType> FindNearestPointsLinear(
+        const PointType& point,
+        unsigned int numPoints) const;
+    
+private: // PRIVATE TYPES
 
-    void WriteToStream(std::ostream& stream) {
-        unsigned int numNodes = d_nodes.size();
-        stream.write(reinterpret_cast<const char*>(&numNodes),
-                     sizeof numNodes);
-        stream.write(reinterpret_cast<const char*>(&d_numDimensions),
-                     sizeof d_numDimensions);
-        stream.write(reinterpret_cast<const char*>(&d_root),
-                     sizeof d_root);
-        for (const auto& node : d_nodes) {
-            PointReaderWriter<PointType>::WritePointToStream(node.point,
-                                                             stream);
-            stream.write(reinterpret_cast<const char*>(&node.leftIndex),
-                         sizeof node.leftIndex);
-            stream.write(reinterpret_cast<const char*>(&node.rightIndex),
-                         sizeof node.rightIndex);
-        }
-    }
-
-    void ReadFromStream(std::istream& stream) {
-        unsigned int numNodes;
-        stream.read(reinterpret_cast<char*>(&numNodes),
-                    sizeof numNodes);
-        stream.read(reinterpret_cast<char*>(&d_numDimensions),
-                    sizeof d_numDimensions);
-        stream.read(reinterpret_cast<char*>(&d_root),
-                    sizeof d_root);
-        d_nodes.clear();
-        d_nodes.reserve(numNodes);
-        for (unsigned int i = 0; i < numNodes; i++) {
-            PointType point;
-            PointReaderWriter<PointType>::ReadPointFromStream(point,
-                                                              stream,
-                                                              d_numDimensions);
-            Node node(point);
-            stream.read(reinterpret_cast<char*>(&node.leftIndex),
-                        sizeof node.leftIndex);
-            stream.read(reinterpret_cast<char*>(&node.rightIndex),
-                        sizeof node.rightIndex);
-            d_nodes.push_back(node);
-        }
-    }
-
-private:
-    typedef KdTreeNode<PointType> Node;
+    struct Node {
+        NodeIndex leftIndex;
+        NodeIndex rightIndex;
+        PointType point;
+    };
     typedef unsigned int Level;
+    typedef std::vector<NodeIndex> IndexVector;
 
-private:
-    double DistanceSq(const PointType& a, const PointType& b) {
-        double distanceSq = 0.0;
-        for (unsigned i = 0; i < a.size(); i++) {
-            double diff = a[i] - b[i];
-            distanceSq += diff * diff;
-        }
-        return distanceSq;
-    }
+private: // PRIVATE DATA
 
-private:
     std::vector<Node> d_nodes;
-    Index d_root = None;
+    NodeIndex d_root = None;
     unsigned int d_numDimensions;
+
+private: // PRIVATE METHODS
+    NodeIndex ConstructSubtreeRecursively(
+        const std::vector<PointType>& points,
+        IndexVector::iterator startIt,
+        IndexVector::iterator endIt,
+        Level curLevel);
 };
 
+template<typename PointType>
+NodeIndex KdTree<PointType>::ConstructSubtreeRecursively(
+    const std::vector<PointType>& points, 
+    IndexVector::iterator startIt, 
+    IndexVector::iterator endIt, 
+    Level curLevel)
+{
+    if (startIt >= endIt) {
+        return None;
+    }
+
+    unsigned int curDimension = curLevel % d_numDimensions;
+    auto comparator = [&](NodeIndex a, NodeIndex b) {
+        return points[a][curDimension] < points[b][curDimension];
+    };
+    std::sort(startIt, endIt, comparator);
+
+    unsigned int pivotOffset = (endIt - startIt) / 2;
+    IndexVector::iterator pivotIt = startIt + pivotOffset;
+
+    Node newNode;
+    newNode.point = points[*pivotIt];
+    newNode.leftIndex
+        = (pivotOffset == 0)
+        ? None
+        : ConstructSubtreeRecursively(
+            points,
+            startIt,
+            pivotIt,
+            curLevel + 1);
+    newNode.rightIndex
+        = ConstructSubtreeRecursively(
+            points,
+            pivotIt + 1,
+            endIt,
+            curLevel + 1);
+    NodeIndex newNodeIndex = d_nodes.size();
+    d_nodes.push_back(newNode);
+    return newNodeIndex;
+}
 
 template<typename PointType>
-inline void KdTree<PointType>::AddPoint(const PointType & point)
+void KdTree<PointType>::CreateFromPoints(
+    const std::vector<PointType>& points)
+{
+    d_nodes.clear();
+    d_nodes.reserve(points.size());
+
+    std::vector<NodeIndex> indexes(points.size());
+    for (int i = 0; i < points.size(); i++) {
+        indexes[i] = i;
+    }
+
+    d_root = ConstructSubtreeRecursively(
+        points, 
+        indexes.begin(), 
+        indexes.end(), 
+        0);
+}
+
+template<typename PointType>
+void KdTree<PointType>::WriteToStream(std::ostream& stream) const {
+    unsigned int numNodes = d_nodes.size();
+    stream.write(reinterpret_cast<const char*>(&numNodes), sizeof numNodes);
+    stream.write(reinterpret_cast<const char*>(&d_numDimensions), 
+                 sizeof d_numDimensions);
+    stream.write(reinterpret_cast<const char*>(&d_root), sizeof d_root);
+    
+    for (const auto& node : d_nodes) {
+        node.point.WritePointToStream(stream, d_numDimensions);
+        stream.write(reinterpret_cast<const char*>(&node.leftIndex),
+                     sizeof node.leftIndex);
+        stream.write(reinterpret_cast<const char*>(&node.rightIndex),
+                     sizeof node.rightIndex);
+    }
+}
+
+template<typename PointType>
+void KdTree<PointType>::ReadFromStream(std::istream& stream) {
+    unsigned int numNodes;
+    stream.read(reinterpret_cast<char*>(&numNodes), sizeof numNodes);
+    stream.read(reinterpret_cast<char*>(&d_numDimensions), 
+                sizeof d_numDimensions);
+    stream.read(reinterpret_cast<char*>(&d_root), sizeof d_root);
+    
+    d_nodes.clear();
+    d_nodes.resize(numNodes);
+    for (unsigned int i = 0; i < numNodes; i++) {
+        Node& node = d_nodes[i];
+        node.point.ReadPointFromStream(stream, d_numDimensions);
+        stream.read(reinterpret_cast<char*>(&node.leftIndex), 
+                    sizeof node.leftIndex);
+        stream.read(reinterpret_cast<char*>(&node.rightIndex),
+                    sizeof node.rightIndex);
+    }
+}
+
+template<typename PointType>
+void KdTree<PointType>::AddPoint(const PointType & point)
 {
     // TODO: check dimensions
 
-    Index newNodeIndex = d_nodes.size();
-    d_nodes.push_back(Node(point));
+    NodeIndex newNodeIndex = d_nodes.size();
+    Node newNode;
+    newNode.leftIndex = None;
+    newNode.rightIndex = None;
+    newNode.point = point;
+    d_nodes.push_back(newNode);
 
     if (None == d_root) {
         // It's the first node of the tree
@@ -144,7 +188,7 @@ inline void KdTree<PointType>::AddPoint(const PointType & point)
         return;
     }
 
-    Index curNodeIndex = d_root;
+    NodeIndex curNodeIndex = d_root;
     unsigned int level = 0;
     while (true) {
         unsigned int dimension = level % d_numDimensions;
@@ -168,23 +212,24 @@ inline void KdTree<PointType>::AddPoint(const PointType & point)
         }
         level++;
     }
+    return;
 }
 
 template<typename PointType>
-std::vector<Index> KdTree<PointType>::FindNearestPoints(
-                                                       const PointType & point,
-                                                       unsigned int numPoints)
+std::vector<PointType> KdTree<PointType>::FindNearestPoints(
+    const PointType & point,
+    unsigned int numPoints) const
 {
-    LimitedDistanceQueue<Index> limitedQueue(numPoints);
+    LimitedDistanceQueue<NodeIndex> limitedQueue(numPoints);
 
     struct Bin {
         Level level;
-        Index nodeIndex;
+        NodeIndex nodeIndex;
         double minBinDistanceSq;
     };
     std::stack<Bin> backtrackingStack;
     
-    Index curNodeIndex = d_root;
+    NodeIndex curNodeIndex = d_root;
     Level curLevel = 0;
     while (!backtrackingStack.empty() || None != curNodeIndex) {
         if (None == curNodeIndex) {
@@ -203,16 +248,15 @@ std::vector<Index> KdTree<PointType>::FindNearestPoints(
             }
         }
         
-        Node& curNode = d_nodes[curNodeIndex];
-        limitedQueue.Push(curNodeIndex,
-                          DistanceSq(point, curNode.point));
+        const Node& curNode = d_nodes[curNodeIndex];
+        limitedQueue.Push(curNodeIndex, point.Distance(curNode.point));
 
         unsigned int dimension = curLevel % d_numDimensions;
         double distanceToBorder
             = abs(point[dimension] - curNode.point[dimension]);
         double distanceToBorderSq = distanceToBorder * distanceToBorder;
 
-        Index otherNodeIndex = None;
+        NodeIndex otherNodeIndex = None;
         if (point[dimension] < curNode.point[dimension]) {
             // left
             curNodeIndex = curNode.leftIndex;
@@ -234,25 +278,31 @@ std::vector<Index> KdTree<PointType>::FindNearestPoints(
         curLevel++;
     }
 
-    return limitedQueue.Items();
+    auto nodeIndexes = limitedQueue.Items();
+    std::vector<PointType> result;
+    result.reserve(nodeIndexes.size());
+    for (auto& index : nodeIndexes) {
+        result.push_back(d_nodes[index].point);
+    }
+    return result;
 }
 
 template<typename PointType>
-std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
-                                                       const PointType & point,
-                                                       unsigned int numPoints)
+std::vector<PointType> KdTree<PointType>::FindNearestPointsBBF(
+    const PointType & point,
+    unsigned int numPoints) const
 {
-    LimitedDistanceQueue<Index> limitedQueue(numPoints);
+    LimitedDistanceQueue<NodeIndex> limitedQueue(numPoints);
 
     struct Bin {
         Level level;
-        Index nodeIndex;
+        NodeIndex nodeIndex;
         double minBinDistanceSq;
     };
     LimitedDistanceQueue<Bin> backtrackingQueue(
         std::numeric_limits<unsigned int>::max());
 
-    Index curNodeIndex = d_root;
+    NodeIndex curNodeIndex = d_root;
     Level curLevel = 0;
     while (!backtrackingQueue.Empty() || None != curNodeIndex) {
         if (None == curNodeIndex) {
@@ -270,16 +320,15 @@ std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
             }
         }
         
-        Node& curNode = d_nodes[curNodeIndex];
-        limitedQueue.Push(curNodeIndex,
-                          DistanceSq(point, curNode.point));
+        const Node& curNode = d_nodes[curNodeIndex];
+        limitedQueue.Push(curNodeIndex, point.Distance(curNode.point));
 
         unsigned int dimension = curLevel % d_numDimensions;
         double distanceToBorder
             = abs(point[dimension] - curNode.point[dimension]);
         double distanceToBorderSq = distanceToBorder * distanceToBorder;
 
-        Index otherNodeIndex = None;
+        NodeIndex otherNodeIndex = None;
         if (point[dimension] < curNode.point[dimension]) {
             // left
             curNodeIndex = curNode.leftIndex;
@@ -301,20 +350,33 @@ std::vector<Index> KdTree<PointType>::FindNearestPointsBBF(
         curLevel++;
     }
 
-    return limitedQueue.Items();
+    auto nodeIndexes = limitedQueue.Items();
+    std::vector<PointType> result;
+    result.reserve(nodeIndexes.size());
+    for (auto& index : nodeIndexes) {
+        result.push_back(d_nodes[index].point);
+    }
+    return result;
 }
 
 template<typename PointType>
-std::vector<Index> KdTree<PointType>::FindNearestPointsLinear(
-                                                       const PointType & point,
-                                                       unsigned int numPoints)
+std::vector<PointType> KdTree<PointType>::FindNearestPointsLinear(
+    const PointType & point,
+    unsigned int numPoints) const
 {
     // Linear search for testing purpose
-    LimitedDistanceQueue<Index> limitedQueue(numPoints);
-    for (Index i = 0; i < d_nodes.size(); i++) {
-        limitedQueue.Push(i, DistanceSq(point, d_nodes[i].point));
+    LimitedDistanceQueue<NodeIndex> limitedQueue(numPoints);
+    for (NodeIndex i = 0; i < d_nodes.size(); i++) {
+        limitedQueue.Push(i, point.Distance(d_nodes[i].point));
     }
-    return limitedQueue.Items();
+
+    auto nodeIndexes = limitedQueue.Items();
+    std::vector<PointType> result;
+    result.reserve(nodeIndexes.size());
+    for (auto& index : nodeIndexes) {
+        result.push_back(d_nodes[index].point);
+    }
+    return result;
 }
 
 } //namespace kdt
