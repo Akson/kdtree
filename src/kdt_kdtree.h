@@ -12,8 +12,6 @@
 namespace kdt {
 
 typedef uint32_t NodeIndex; // Used for referncing nodes in a tree
-static const NodeIndex None = std::numeric_limits<NodeIndex>::max();
-static const double MaxDistance = std::numeric_limits<double>::max();
 
 template <typename PointType> class KdTree {
 public: // PUBLIC METHODS
@@ -70,6 +68,10 @@ private: // PRIVATE TYPES
     };
     typedef uint32_t Level;
     typedef std::vector<NodeIndex> IndexVector;
+
+private: // PRIVATE CONSTANTS
+
+    static const NodeIndex None = UINT32_MAX;
 
 private: // PRIVATE DATA
 
