@@ -18,10 +18,10 @@ int main(int argc, char * argv[]) {
             << "and reports the top 3 nearest neighbors for each query point\n"
             << "\n"
             << "Usage:\n"
-            << "main_kdtreequery <tree file name> <query points file name>\n"
+            << "kdtreequery <tree file name> <query points file name>\n"
             << "\n"
             << "Example:\n"
-            << "kdtreebuilder sample_data.kdt query_points.txt\n"
+            << "kdtreequery sample_data.kdt query_points.txt\n"
             << "\n";
         return 0;
     }

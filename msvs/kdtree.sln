@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kdtreequery", "kdtreequery\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kdtree", "kdtree\kdtree.vcxproj", "{DF5FE05C-CB6C-42AB-921C-966441931234}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kdtpointsgenerator", "kdtpointsgenerator\kdtpointsgenerator.vcxproj", "{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -47,6 +49,14 @@ Global
 		{DF5FE05C-CB6C-42AB-921C-966441931234}.Release|x64.Build.0 = Release|x64
 		{DF5FE05C-CB6C-42AB-921C-966441931234}.Release|x86.ActiveCfg = Release|Win32
 		{DF5FE05C-CB6C-42AB-921C-966441931234}.Release|x86.Build.0 = Release|Win32
+		{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}.Debug|x64.ActiveCfg = Debug|x64
+		{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}.Debug|x64.Build.0 = Debug|x64
+		{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}.Debug|x86.ActiveCfg = Debug|Win32
+		{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}.Debug|x86.Build.0 = Debug|Win32
+		{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}.Release|x64.ActiveCfg = Release|x64
+		{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}.Release|x64.Build.0 = Release|x64
+		{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}.Release|x86.ActiveCfg = Release|Win32
+		{EBB2EC79-E74C-42A6-A2EE-959BDA26EFBF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
