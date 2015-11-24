@@ -13,9 +13,9 @@ template <typename T, typename U> struct VectorPointWithUserData
     void WritePointToStream(std::ostream& stream,
                             unsigned int numDimensions) const {
         stream.write(reinterpret_cast<const char*>(std::vector<T>::data()),
-                     numDimensions * (sizeof T));
+                     numDimensions * sizeof(T));
         stream.write(reinterpret_cast<const char*>(&userData),
-                     sizeof userData);
+                     sizeof(userData));
         
     }
 
@@ -23,9 +23,9 @@ template <typename T, typename U> struct VectorPointWithUserData
                              unsigned int numDimensions) {
         std::vector<T>::resize(numDimensions);
         stream.read(reinterpret_cast<char*>(std::vector<T>::data()),
-                    numDimensions * (sizeof T));
+                    numDimensions * sizeof(T));
         stream.read(reinterpret_cast<char*>(&userData),
-                    sizeof userData);
+                    sizeof(userData));
     }
 
     double Distance(const VectorPointWithUserData& other) const {

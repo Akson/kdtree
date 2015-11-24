@@ -150,10 +150,10 @@ void KdTree<PointType>::CreateFromPoints(
 template<typename PointType>
 void KdTree<PointType>::WriteToStream(std::ostream& stream) const {
     uint32_t numNodes = d_nodes.size();
-    stream.write(reinterpret_cast<const char*>(&numNodes), sizeof uint32_t);
+    stream.write(reinterpret_cast<const char*>(&numNodes), sizeof(numNodes));
     stream.write(reinterpret_cast<const char*>(&d_numDimensions), 
-        sizeof uint32_t);
-    stream.write(reinterpret_cast<const char*>(&d_root), sizeof NodeIndex);
+        sizeof(d_numDimensions));
+    stream.write(reinterpret_cast<const char*>(&d_root), sizeof(d_root));
     
     for (const auto& node : d_nodes) {
         node.point.WritePointToStream(stream, d_numDimensions);
@@ -167,9 +167,10 @@ void KdTree<PointType>::WriteToStream(std::ostream& stream) const {
 template<typename PointType>
 void KdTree<PointType>::ReadFromStream(std::istream& stream) {
     uint32_t numNodes;
-    stream.read(reinterpret_cast<char*>(&numNodes), sizeof uint32_t);
-    stream.read(reinterpret_cast<char*>(&d_numDimensions), sizeof uint32_t);
-    stream.read(reinterpret_cast<char*>(&d_root), sizeof NodeIndex);
+    stream.read(reinterpret_cast<char*>(&numNodes), sizeof numNodes);
+    stream.read(reinterpret_cast<char*>(&d_numDimensions), 
+        sizeof d_numDimensions);
+    stream.read(reinterpret_cast<char*>(&d_root), sizeof d_root);
     
     d_nodes.clear();
     d_nodes.resize(numNodes);
