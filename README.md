@@ -11,6 +11,7 @@ Requirements:
 Steps:
 - Open the 'kdtree\msvs\kdtree.sln'
 - Build all projects
+- Executables will be built in the 'kdtree\msvs\bin\'
 
 -------------------------------------------------------------------------------
 How to build on Linux with GCC and CMake:
@@ -24,3 +25,4 @@ Steps:
 - cd kdtree/cmake
 - cmake .
 - make
+- Executables will be built in the 'kdtree/cmake'
