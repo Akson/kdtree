@@ -98,31 +98,29 @@ NodeIndex KdTree<PointType>::ConstructSubtreeRecursively(
         return None;
     }
 
+    // Sort indexes by current dimension
     uint32_t curDimension = curLevel % d_numDimensions;
     auto comparator = [&](NodeIndex a, NodeIndex b) {
         return points[a][curDimension] < points[b][curDimension];
     };
     std::sort(startIt, endIt, comparator);
 
+    // Split at the median
     uint32_t pivotOffset = (endIt - startIt) / 2;
     IndexVector::iterator pivotIt = startIt + pivotOffset;
 
     Node newNode;
     newNode.point = points[*pivotIt];
     newNode.leftIndex
-        = (pivotOffset == 0)
-        ? None
-        : ConstructSubtreeRecursively(
-            points,
-            startIt,
-            pivotIt,
-            curLevel + 1);
-    newNode.rightIndex
-        = ConstructSubtreeRecursively(
-            points,
-            pivotIt + 1,
-            endIt,
-            curLevel + 1);
+        = (pivotOffset == 0) ? None
+                             : ConstructSubtreeRecursively(points,
+                                                           startIt,
+                                                           pivotIt,
+                                                           curLevel + 1);
+    newNode.rightIndex = ConstructSubtreeRecursively(points,
+                                                     pivotIt + 1,
+                                                     endIt,
+                                                     curLevel + 1);
     NodeIndex newNodeIndex = d_nodes.size();
     d_nodes.push_back(newNode);
     return newNodeIndex;
