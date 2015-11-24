@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8.9)
+project (kdtree)
+include_directories(../src)
+ADD_DEFINITIONS(-std=c++11)
+add_executable(main_kdtreebuilder ../src/main_kdtreebuilder.cpp)
+add_executable(main_kdtreequery ../src/main_kdtreequery.cpp)
