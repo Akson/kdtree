@@ -7,10 +7,11 @@
 #include <stack>
 #include <algorithm>
 #include <limits>
+#include <cstdint>
 
 namespace kdt {
 
-typedef std::size_t NodeIndex; // Used for referncing nodes in a tree
+typedef uint32_t NodeIndex; // Used for referncing nodes in a tree
 static const NodeIndex None = std::numeric_limits<NodeIndex>::max();
 static const double MaxDistance = std::numeric_limits<double>::max();
 
@@ -22,7 +23,7 @@ public: // PUBLIC METHODS
     // specified during construction, the tree should be created from a binary
     // representation using the 'ReadFromStream' or from a list of points using
     // the 'CreateFromPoints'.
-    KdTree(unsigned int numDimensions = 0) : d_numDimensions(numDimensions) {}
+    KdTree(uint32_t numDimensions = 0) : d_numDimensions(numDimensions) {}
 
     ~KdTree() {}
 
@@ -31,7 +32,7 @@ public: // PUBLIC METHODS
     // by the 'numDimensions'. If the 'point' vector is empty, create an empty
     // tree.
     void CreateFromPoints(const std::vector<PointType>& points,
-                          unsigned int numDimensions);
+                          uint32_t numDimensions);
 
     // Add a point specified by the 'point' to the existing kd-tree.
     // The behavior is undefined unless the number of  dimension of the added
@@ -51,14 +52,14 @@ public: // PUBLIC METHODS
     // If the tree contains less than 'numPoints' points, return all points of
     // the tree. If the tree is empty, return an empty vector.
     std::vector<PointType> FindNearestPoints(const PointType& point,
-                                             unsigned int numPoints) const;
+                                             uint32_t numPoints) const;
 
     std::vector<PointType> FindNearestPointsBBF(const PointType& point,
-                                                unsigned int numPoints) const;
+                                                uint32_t numPoints) const;
 
     std::vector<PointType> FindNearestPointsLinear(
         const PointType& point,
-        unsigned int numPoints) const;
+        uint32_t numPoints) const;
     
 private: // PRIVATE TYPES
 
@@ -67,14 +68,14 @@ private: // PRIVATE TYPES
         NodeIndex rightIndex;
         PointType point;
     };
-    typedef unsigned int Level;
+    typedef uint32_t Level;
     typedef std::vector<NodeIndex> IndexVector;
 
 private: // PRIVATE DATA
 
     std::vector<Node> d_nodes;
     NodeIndex d_root = None;
-    unsigned int d_numDimensions;
+    uint32_t d_numDimensions;
 
 private: // PRIVATE METHODS
     NodeIndex ConstructSubtreeRecursively(
@@ -95,13 +96,13 @@ NodeIndex KdTree<PointType>::ConstructSubtreeRecursively(
         return None;
     }
 
-    unsigned int curDimension = curLevel % d_numDimensions;
+    uint32_t curDimension = curLevel % d_numDimensions;
     auto comparator = [&](NodeIndex a, NodeIndex b) {
         return points[a][curDimension] < points[b][curDimension];
     };
     std::sort(startIt, endIt, comparator);
 
-    unsigned int pivotOffset = (endIt - startIt) / 2;
+    uint32_t pivotOffset = (endIt - startIt) / 2;
     IndexVector::iterator pivotIt = startIt + pivotOffset;
 
     Node newNode;
@@ -128,7 +129,7 @@ NodeIndex KdTree<PointType>::ConstructSubtreeRecursively(
 template<typename PointType>
 void KdTree<PointType>::CreateFromPoints(
     const std::vector<PointType>& points,
-    unsigned int numDimensions)
+    uint32_t numDimensions)
 {
     d_numDimensions = numDimensions;
     d_nodes.clear();
@@ -148,11 +149,11 @@ void KdTree<PointType>::CreateFromPoints(
 
 template<typename PointType>
 void KdTree<PointType>::WriteToStream(std::ostream& stream) const {
-    unsigned int numNodes = d_nodes.size();
-    stream.write(reinterpret_cast<const char*>(&numNodes), sizeof numNodes);
+    uint32_t numNodes = d_nodes.size();
+    stream.write(reinterpret_cast<const char*>(&numNodes), sizeof uint32_t);
     stream.write(reinterpret_cast<const char*>(&d_numDimensions), 
-                 sizeof d_numDimensions);
-    stream.write(reinterpret_cast<const char*>(&d_root), sizeof d_root);
+        sizeof uint32_t);
+    stream.write(reinterpret_cast<const char*>(&d_root), sizeof NodeIndex);
     
     for (const auto& node : d_nodes) {
         node.point.WritePointToStream(stream, d_numDimensions);
@@ -165,15 +166,14 @@ void KdTree<PointType>::WriteToStream(std::ostream& stream) const {
 
 template<typename PointType>
 void KdTree<PointType>::ReadFromStream(std::istream& stream) {
-    unsigned int numNodes;
-    stream.read(reinterpret_cast<char*>(&numNodes), sizeof numNodes);
-    stream.read(reinterpret_cast<char*>(&d_numDimensions), 
-                sizeof d_numDimensions);
-    stream.read(reinterpret_cast<char*>(&d_root), sizeof d_root);
+    uint32_t numNodes;
+    stream.read(reinterpret_cast<char*>(&numNodes), sizeof uint32_t);
+    stream.read(reinterpret_cast<char*>(&d_numDimensions), sizeof uint32_t);
+    stream.read(reinterpret_cast<char*>(&d_root), sizeof NodeIndex);
     
     d_nodes.clear();
     d_nodes.resize(numNodes);
-    for (unsigned int i = 0; i < numNodes; i++) {
+    for (uint32_t i = 0; i < numNodes; i++) {
         Node& node = d_nodes[i];
         node.point.ReadPointFromStream(stream, d_numDimensions);
         stream.read(reinterpret_cast<char*>(&node.leftIndex), 
@@ -200,9 +200,9 @@ void KdTree<PointType>::AddPoint(const PointType & point)
     }
 
     NodeIndex curNodeIndex = d_root;
-    unsigned int level = 0;
+    uint32_t level = 0;
     while (true) {
-        unsigned int dimension = level % d_numDimensions;
+        uint32_t dimension = level % d_numDimensions;
         Node& curNode = d_nodes[curNodeIndex];
         if (point[dimension] < curNode.point[dimension]) {
             // left
@@ -229,7 +229,7 @@ void KdTree<PointType>::AddPoint(const PointType & point)
 template<typename PointType>
 std::vector<PointType> KdTree<PointType>::FindNearestPoints(
     const PointType & point,
-    unsigned int numPoints) const
+    uint32_t numPoints) const
 {
     LimitedDistanceQueue<NodeIndex> limitedQueue(numPoints);
 
@@ -262,7 +262,7 @@ std::vector<PointType> KdTree<PointType>::FindNearestPoints(
         const Node& curNode = d_nodes[curNodeIndex];
         limitedQueue.Push(curNodeIndex, point.Distance(curNode.point));
 
-        unsigned int dimension = curLevel % d_numDimensions;
+        uint32_t dimension = curLevel % d_numDimensions;
         double distanceToBorder
             = abs(point[dimension] - curNode.point[dimension]);
         double distanceToBorderSq = distanceToBorder * distanceToBorder;
@@ -301,7 +301,7 @@ std::vector<PointType> KdTree<PointType>::FindNearestPoints(
 template<typename PointType>
 std::vector<PointType> KdTree<PointType>::FindNearestPointsBBF(
     const PointType & point,
-    unsigned int numPoints) const
+    uint32_t numPoints) const
 {
     LimitedDistanceQueue<NodeIndex> limitedQueue(numPoints);
 
@@ -311,7 +311,7 @@ std::vector<PointType> KdTree<PointType>::FindNearestPointsBBF(
         double minBinDistanceSq;
     };
     LimitedDistanceQueue<Bin> backtrackingQueue(
-        std::numeric_limits<unsigned int>::max());
+        std::numeric_limits<uint32_t>::max());
 
     NodeIndex curNodeIndex = d_root;
     Level curLevel = 0;
@@ -334,7 +334,7 @@ std::vector<PointType> KdTree<PointType>::FindNearestPointsBBF(
         const Node& curNode = d_nodes[curNodeIndex];
         limitedQueue.Push(curNodeIndex, point.Distance(curNode.point));
 
-        unsigned int dimension = curLevel % d_numDimensions;
+        uint32_t dimension = curLevel % d_numDimensions;
         double distanceToBorder
             = abs(point[dimension] - curNode.point[dimension]);
         double distanceToBorderSq = distanceToBorder * distanceToBorder;
@@ -373,7 +373,7 @@ std::vector<PointType> KdTree<PointType>::FindNearestPointsBBF(
 template<typename PointType>
 std::vector<PointType> KdTree<PointType>::FindNearestPointsLinear(
     const PointType & point,
-    unsigned int numPoints) const
+    uint32_t numPoints) const
 {
     // Linear search for testing purpose
     LimitedDistanceQueue<NodeIndex> limitedQueue(numPoints);

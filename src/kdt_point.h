@@ -12,7 +12,7 @@ template <typename T, typename U> struct VectorPointWithUserData
 
     void WritePointToStream(std::ostream& stream,
                             unsigned int numDimensions) const {
-        stream.write(reinterpret_cast<const char*>(data()), 
+        stream.write(reinterpret_cast<const char*>(std::vector<T>::data()),
                      numDimensions * (sizeof T));
         stream.write(reinterpret_cast<const char*>(&userData),
                      sizeof userData);
@@ -21,8 +21,8 @@ template <typename T, typename U> struct VectorPointWithUserData
 
     void ReadPointFromStream(std::istream& stream, 
                              unsigned int numDimensions) {
-        resize(numDimensions);
-        stream.read(reinterpret_cast<char*>(data()), 
+        std::vector<T>::resize(numDimensions);
+        stream.read(reinterpret_cast<char*>(std::vector<T>::data()),
                     numDimensions * (sizeof T));
         stream.read(reinterpret_cast<char*>(&userData),
                     sizeof userData);
@@ -30,7 +30,7 @@ template <typename T, typename U> struct VectorPointWithUserData
 
     double Distance(const VectorPointWithUserData& other) const {
         double distanceSq = 0.0;
-        for (unsigned i = 0; i < size(); i++) {
+        for (unsigned i = 0; i < std::vector<T>::size(); i++) {
             double diff = (*this)[i] - other[i];
             distanceSq += diff * diff;
         }
