@@ -26,3 +26,16 @@ Steps:
 - cmake .
 - make
 - Executables will be built in the 'kdtree/cmake'
+
+-------------------------------------------------------------------------------
+How to test:
+-------------------------------------------------------------------------------
+Warning: 
+- On windows executables will have names like 'kdtreequery_32_Release.exe'.
+
+Steps:
+- Go to the folder with executables
+- kdtpointsgenerator 1000 5 tree_points.txt
+- kdtpointsgenerator 10 5 query_points.txt
+- kdtreebuilder tree_points.txt tree_points.kdt
+- kdtreequery tree_points.kdt query_points.txt
