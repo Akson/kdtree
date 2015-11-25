@@ -175,6 +175,5 @@ int main(int argc, char * argv[]) {
     TestMultipleDimensions(numPoints);
  
     std::cout << "\nDone\n";
-    std::cin.ignore();
     return 0;
 }

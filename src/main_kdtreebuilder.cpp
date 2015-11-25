@@ -76,6 +76,5 @@ int main(int argc, char * argv[]) {
     outputFile.close();
 
     std::cout << "\nDone\n";
-    std::cin.ignore();
     return 0;
 }
