@@ -1,10 +1,14 @@
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include<string>
-#include<sstream>
-#include"kdt_kdtree.h"
-#include"kdt_point.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <ctime>
+#include <ratio>
+#include <chrono>
+
+#include <kdt_kdtree.h>
+#include <kdt_point.h>
 
 typedef kdt::VectorPointWithUserData<double, int> Point;
 typedef kdt::KdTree<Point> KdTree;
@@ -75,6 +79,11 @@ int main(int argc, char * argv[]) {
     inputTreeFile.close();
 
     // Searching for closest points
+    std::chrono::high_resolution_clock::time_point startTime;
+    std::chrono::high_resolution_clock::time_point endTime;
+    std::chrono::duration<double> time_span;
+    double deltaSeconds;
+
     const unsigned int nearestPointsNumber = 3;
     std::cout << "Searching for "<< nearestPointsNumber << " closest points";
     for (int iQueryPoint = 0;
@@ -85,25 +94,43 @@ int main(int argc, char * argv[]) {
 
         std::cout << "\nLinear search:  ";
         Point p1 = queryPoint;
+        startTime = std::chrono::high_resolution_clock::now();
         auto nearestPointsIndexes
             = tree.FindNearestPointsLinear(p1, nearestPointsNumber);
+        endTime = std::chrono::high_resolution_clock::now();
         for (auto point : nearestPointsIndexes) {
             std::cout << point.userData << ", ";
         }
+        deltaSeconds
+            = std::chrono::duration_cast<std::chrono::duration<double>>(
+                endTime - startTime).count() * 1000;
+        std::cout << "[" << deltaSeconds << " ms]";
 
         std::cout << "\nNormal search:  ";
-        nearestPointsIndexes 
+        startTime = std::chrono::high_resolution_clock::now();
+        nearestPointsIndexes
             = tree.FindNearestPoints(p1, nearestPointsNumber);
+        endTime = std::chrono::high_resolution_clock::now();
         for (auto point : nearestPointsIndexes) {
             std::cout << point.userData << ", ";
         }
+        deltaSeconds
+            = std::chrono::duration_cast<std::chrono::duration<double>>(
+                endTime - startTime).count() * 1000;
+        std::cout << "[" << deltaSeconds << " ms]";
 
         std::cout << "\nBest bin first: ";
-        nearestPointsIndexes 
+        startTime = std::chrono::high_resolution_clock::now();
+        nearestPointsIndexes
             = tree.FindNearestPointsBBF(p1, nearestPointsNumber);
+        endTime = std::chrono::high_resolution_clock::now();
         for (auto point : nearestPointsIndexes) {
             std::cout << point.userData << ", ";
         }
+        deltaSeconds
+            = std::chrono::duration_cast<std::chrono::duration<double>>(
+                endTime - startTime).count() * 1000;
+        std::cout << "[" << deltaSeconds << " ms]";
 
         std::cout << "\n\n";
     }
