@@ -39,3 +39,4 @@ Steps:
 - kdtpointsgenerator 10 5 query_points.txt
 - kdtreebuilder tree_points.txt tree_points.kdt
 - kdtreequery tree_points.kdt query_points.txt
+- kdtbenchmark 10000
