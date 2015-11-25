@@ -6,7 +6,7 @@
 #include"kdt_kdtree.h"
 #include"kdt_point.h"
 
-typedef kdt::VectorPointWithUserData<double, int> Point;
+typedef kdt::VectorPointWithUserData<double, uint32_t> Point;
 typedef kdt::KdTree<Point> KdTree;
 
 

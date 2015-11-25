@@ -1,8 +1,8 @@
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include<string>
-#include<cstdlib>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <cstdlib>
 #include <ctime>
 
 int main(int argc, char * argv[]) {
@@ -22,7 +22,7 @@ int main(int argc, char * argv[]) {
     }
 
     std::string numPointsStr(argv[1]);
-    unsigned long numPoints = 0;
+    uint32_t numPoints = 0;
     try {
         numPoints = std::stoul(numPointsStr);
     }
@@ -33,7 +33,7 @@ int main(int argc, char * argv[]) {
     }
 
     std::string numDimensionsStr(argv[2]);
-    unsigned long numDimensions = 0;
+    uint32_t numDimensions = 0;
     try {
         numDimensions = std::stoul(numDimensionsStr);
     }
@@ -51,9 +51,9 @@ int main(int argc, char * argv[]) {
         return -1;
     }
 
-    std::srand(std::time(0));
-    for (unsigned long iPoint = 0; iPoint < numPoints; iPoint++) {
-        for (unsigned long iDim = 0; iDim < numDimensions; iDim++) {
+    std::srand(static_cast<unsigned int>(std::time(0)));
+    for (uint32_t iPoint = 0; iPoint < numPoints; iPoint++) {
+        for (uint32_t iDim = 0; iDim < numDimensions; iDim++) {
             double v = double(std::rand()) / RAND_MAX;
             outputFile << v << " ";
         }

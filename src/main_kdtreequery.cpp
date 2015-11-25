@@ -10,7 +10,7 @@
 #include <kdt_kdtree.h>
 #include <kdt_point.h>
 
-typedef kdt::VectorPointWithUserData<double, int> Point;
+typedef kdt::VectorPointWithUserData<double, uint32_t> Point;
 typedef kdt::KdTree<Point> KdTree;
 
 
@@ -81,12 +81,11 @@ int main(int argc, char * argv[]) {
     // Searching for closest points
     std::chrono::high_resolution_clock::time_point startTime;
     std::chrono::high_resolution_clock::time_point endTime;
-    std::chrono::duration<double> time_span;
     double deltaSeconds;
 
     const unsigned int nearestPointsNumber = 3;
     std::cout << "Searching for "<< nearestPointsNumber << " closest points";
-    for (int iQueryPoint = 0;
+    for (uint32_t iQueryPoint = 0;
         iQueryPoint < queryPoints.size(); 
         iQueryPoint++) {
         Point queryPoint = queryPoints[iQueryPoint];

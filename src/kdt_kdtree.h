@@ -136,7 +136,7 @@ void KdTree<PointType>::CreateFromPoints(
     d_nodes.reserve(points.size());
 
     std::vector<NodeIndex> indexes(points.size());
-    for (int i = 0; i < points.size(); i++) {
+    for (uint32_t i = 0; i < points.size(); i++) {
         indexes[i] = i;
     }
 
