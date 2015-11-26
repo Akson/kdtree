@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include <cstdint>
 
 int main(int argc, char * argv[]) {
     if (argc != 4) {
